@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.1
+Date: 2026-11-16
+  Changes:
+    - Added LuaEntity.update_connections() support so existing mining drills automatically refresh and mine newly swapped resources.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 2026-11-14
   Info:

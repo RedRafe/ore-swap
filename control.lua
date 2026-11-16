@@ -22,12 +22,9 @@ local function open_swap_gui(player)
         direction = 'vertical',
         caption = 'Ore Swap config',
     }
-    -- Position near the top-left or center so it doesn't block the cursor while dragging
     frame.location = { x = 20, y = 80 }
 
-    local flow = frame
-        .add { type = 'frame', style = 'inside_shallow_frame_with_padding' }
-        .add { type = 'flow', direction = 'horizontal' }
+    local flow = frame.add { type = 'frame', style = 'inside_shallow_frame_with_padding' }.add { type = 'flow', direction = 'horizontal' }
     flow.style.vertical_align = 'center'
     flow.add { type = 'label', caption = 'New resource: ' }
 
@@ -96,30 +93,35 @@ script.on_event(defines.events.on_player_selected_area, function(event)
             return
         end
 
-        for _, entity in ipairs(entities) do
-            if entity.valid and entity.type == 'resource' then
-                if entity.name ~= target_ore then
-                    local amount = entity.amount
-                    local position = entity.position
-                    local surface = player.surface
+        local drills_to_update = {}
 
-                    entity.destroy()
-                    surface.create_entity {
-                        name = target_ore,
-                        position = position,
-                        amount = amount,
-                    }
+        -- First pass: replace resources and collect selected mining drills
+        for _, entity in pairs(entities) do
+            if entity.valid then
+                if entity.type == 'resource' then
+                    if entity.name ~= target_ore then
+                        local amount = entity.amount
+                        local position = entity.position
+                        local surface = player.surface
+
+                        entity.destroy()
+                        surface.create_entity {
+                            name = target_ore,
+                            position = position,
+                            amount = amount,
+                        }
+                    end
+                elseif entity.type == 'mining-drill' then
+                    drills_to_update[#drills_to_update+1] = entity
                 end
             end
         end
-    end
-end)
 
-script.on_event(defines.events.on_player_dropped_item, function(event)
-    if event.entity ~= nil and event.entity.stack ~= nil then
-        if event.entity.stack.name == 'ore-swap' then
-            event.entity.stack.clear()
-            close_swap_gui(game.players[event.player_index])
+        -- Second pass: refresh connections for all captured mining drills after all resources are swapped
+        for _, drill in pairs(drills_to_update) do
+            if drill.valid then
+                drill.update_connections()
+            end
         end
     end
 end)
